@@ -1030,7 +1030,7 @@ ${JSON.stringify(message, null, 4)}`);
                   const userstate = Object.assign({}, this.userstate[channel], { emotes: null });
                   userstate.id = tags.id;
                   userstate.sentLocally = true;
-                  if (sentsentTags && Tags["reply-parent-msg-id"]) {
+                  if (sentTags && sentTags["reply-parent-msg-id"]) {
                     userstate["reply-parent-msg-id"] = sentTags["reply-parent-msg-id"];
                   }
                   const messagesLogLevel = (_h = this.opts.options.messagesLogLevel) != null ? _h : "info";
