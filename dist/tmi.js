@@ -1019,6 +1019,7 @@ ${JSON.stringify(message, null, 4)}`);
                   const entry = this.sendQueue[index];
                   this.sendQueue.splice(index, 1);
                   const message2 = entry.message;
+                  const sentTags = entry.tags;
                   const resolve = entry.resolver;
                   const reject = entry.rejecter;
                   const emotes = {};
@@ -1029,6 +1030,9 @@ ${JSON.stringify(message, null, 4)}`);
                   const userstate = Object.assign({}, this.userstate[channel], { emotes: null });
                   userstate.id = tags.id;
                   userstate.sentLocally = true;
+                  if (sentTags["reply-parent-msg-id"]) {
+                    userstate["reply-parent-msg-id"] = sentTags["reply-parent-msg-id"];
+                  }
                   const messagesLogLevel = (_h = this.opts.options.messagesLogLevel) != null ? _h : "info";
                   const actionMessage = _.actionMessage(message2);
                   if (actionMessage) {
@@ -1431,7 +1435,7 @@ ${JSON.stringify(message, null, 4)}`);
               });
             }
             const UUID = generateUUID();
-            this.sendQueue.push({ nonce: UUID, message, resolver: resolve, rejecter: reject });
+            this.sendQueue.push({ nonce: UUID, message, tags, resolver: resolve, rejecter: reject });
             if (!tags)
               tags = {};
             tags["client-nonce"] = UUID;
