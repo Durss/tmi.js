@@ -1,3 +1,9 @@
+# FORK CHANGES
+This fork sends the message to Twitch and waits for Twitch to send back the actual ID of the message, then, and only then, it will broadcast the message add event.
+
+More details here:
+https://github.com/tmijs/tmi.js/issues/529
+
 # tmi.js
 
 ![Test Workflow Status](https://github.com/tmijs/tmi.js/workflows/Test/badge.svg)
