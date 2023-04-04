@@ -419,6 +419,7 @@ var tmi = (() => {
           this.ws = null;
           this.emotes = "";
           this.emotesets = {};
+          this.sendQueue = [];
           this.username = "";
           this.channels = [];
           this.globaluserstate = {};
@@ -437,7 +438,7 @@ var tmi = (() => {
           throw new Error("The Client.api() method has been removed.");
         }
         handleMessage(message) {
-          var _a2, _b, _c, _d, _e, _f, _g, _h;
+          var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
           if (!message) {
             return;
           }
@@ -1010,6 +1011,41 @@ ${JSON.stringify(message, null, 4)}`);
                   this.emit("emotesets", this.emotes, null);
                 }
                 this.userstate[channel] = tags;
+                const nonce = message.raw.replace(/.*client-nonce=(.*?);.*/gi, "$1");
+                if (nonce) {
+                  const index = this.sendQueue.findIndex((v) => v.nonce == nonce);
+                  if (index == -1)
+                    return;
+                  const entry = this.sendQueue[index];
+                  this.sendQueue.splice(index, 1);
+                  const message2 = entry.message;
+                  const resolve = entry.resolver;
+                  const reject = entry.rejecter;
+                  const emotes = {};
+                  Object.keys(this.emotesets).forEach((id) => this.emotesets[id].forEach((emote) => {
+                    const emoteFunc = _.isRegex(emote.code) ? parse.emoteRegex : parse.emoteString;
+                    return emoteFunc(message2, emote.code, emote.id, emotes);
+                  }));
+                  const userstate = Object.assign({}, this.userstate[channel], { emotes: null });
+                  userstate.id = tags.id;
+                  userstate.sentLocally = true;
+                  const messagesLogLevel = (_h = this.opts.options.messagesLogLevel) != null ? _h : "info";
+                  const actionMessage = _.actionMessage(message2);
+                  if (actionMessage) {
+                    userstate["message-type"] = "action";
+                    this.log[messagesLogLevel](`[${channel}] *<${this.getUsername()}>: ${actionMessage[1]}`);
+                    this.emits(["action", "message"], [
+                      [channel, userstate, actionMessage[1], true]
+                    ]);
+                  } else {
+                    userstate["message-type"] = "chat";
+                    this.log[messagesLogLevel](`[${channel}] <${this.getUsername()}>: ${message2}`);
+                    this.emits(["chat", "message"], [
+                      [channel, userstate, message2, true]
+                    ]);
+                  }
+                  resolve();
+                }
                 break;
               case "GLOBALUSERSTATE":
                 this.globaluserstate = tags;
@@ -1157,7 +1193,7 @@ ${JSON.stringify(message, null, 4)}`);
                     this.emit("hosted", channel, name, 0, autohost);
                   }
                 } else {
-                  const messagesLogLevel = (_h = this.opts.options.messagesLogLevel) != null ? _h : "info";
+                  const messagesLogLevel = (_i = this.opts.options.messagesLogLevel) != null ? _i : "info";
                   const isActionMessage = _.actionMessage(msg);
                   message.tags["message-type"] = isActionMessage ? "action" : "chat";
                   const cleanedMsg = isActionMessage ? isActionMessage[1] : msg;
@@ -1360,7 +1396,6 @@ ${JSON.stringify(message, null, 4)}`);
         }
         _sendMessage({ channel, message, tags }, fn) {
           return new Promise((resolve, reject) => {
-            var _a2;
             if (!this._isConnected()) {
               return reject("Not connected to server.");
             } else if (_.isJustinfan(this.getUsername())) {
@@ -1380,28 +1415,30 @@ ${JSON.stringify(message, null, 4)}`);
               message = msg.slice(0, lastSpace);
               setTimeout(() => this._sendMessage({ channel, message: msg.slice(lastSpace), tags }), 350);
             }
+            function generateUUID() {
+              var d = new Date().getTime();
+              var d2 = typeof performance !== "undefined" && performance.now && performance.now() * 1e3 || 0;
+              return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16;
+                if (d > 0) {
+                  r = (d + r) % 16 | 0;
+                  d = Math.floor(d / 16);
+                } else {
+                  r = (d2 + r) % 16 | 0;
+                  d2 = Math.floor(d2 / 16);
+                }
+                return (c === "x" ? r : r & 3 | 8).toString(16);
+              });
+            }
+            const UUID = generateUUID();
+            this.sendQueue.push({ nonce: UUID, message, resolver: resolve, rejecter: reject });
+            if (!tags)
+              tags = {};
+            tags["client-nonce"] = UUID;
             const formedTags = parser.formTags(tags);
             this.ws.send(`${formedTags ? `${formedTags} ` : ""}PRIVMSG ${chan} :${message}`);
-            const userstate = Object.assign({}, this.userstate[chan], { emotes: null });
-            const messagesLogLevel = (_a2 = this.opts.options.messagesLogLevel) != null ? _a2 : "info";
-            const actionMessage = _.actionMessage(message);
-            if (actionMessage) {
-              userstate["message-type"] = "action";
-              this.log[messagesLogLevel](`[${chan}] *<${this.getUsername()}>: ${actionMessage[1]}`);
-              this.emits(["action", "message"], [
-                [chan, userstate, actionMessage[1], true]
-              ]);
-            } else {
-              userstate["message-type"] = "chat";
-              this.log[messagesLogLevel](`[${chan}] <${this.getUsername()}>: ${message}`);
-              this.emits(["chat", "message"], [
-                [chan, userstate, message, true]
-              ]);
-            }
             if (typeof fn === "function") {
               fn(resolve, reject);
-            } else {
-              resolve();
             }
           });
         }
@@ -1672,7 +1709,7 @@ ${JSON.stringify(message, null, 4)}`);
   });
 
   // index.js
-  var require_tmi = __commonJS({
+  var require_TMI = __commonJS({
     "index.js"(exports, module) {
       var Client = require_Client();
       module.exports = {
@@ -1681,5 +1718,5 @@ ${JSON.stringify(message, null, 4)}`);
       };
     }
   });
-  return require_tmi();
+  return require_TMI();
 })();
