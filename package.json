@@ -37,13 +37,13 @@
   "repository": "tmijs/tmi.js",
   "bugs": "https://github.com/tmijs/tmi.js/issues",
   "dependencies": {
-    "ws": "8.8.0"
+    "ws": "8.18.3"
   },
   "devDependencies": {
-    "esbuild": "0.14.47",
+    "esbuild": "0.25.8",
     "eslint": "8.18.0",
     "hook-std": "2.0.0",
-    "mocha": "10.0.0",
+    "mocha": "10.8.2",
     "nyc": "15.1.0",
     "should": "13.2.3"
   },
