@@ -37,15 +37,20 @@
   "repository": "tmijs/tmi.js",
   "bugs": "https://github.com/tmijs/tmi.js/issues",
   "dependencies": {
-    "ws": "8.18.3"
+    "ws": "8.21.0"
   },
   "devDependencies": {
     "esbuild": "0.25.8",
     "eslint": "8.18.0",
     "hook-std": "2.0.0",
-    "mocha": "10.8.2",
-    "nyc": "15.1.0",
+    "mocha": "11.7.6",
+    "nyc": "18.0.0",
     "should": "13.2.3"
+  },
+  "overrides": {
+    "serialize-javascript": "7.0.5",
+    "diff": "9.0.0",
+    "uuid": "14.0.0"
   },
   "browser": {
     "ws": false
