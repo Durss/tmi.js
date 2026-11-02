@@ -4,6 +4,18 @@ This fork sends the message to Twitch and waits for Twitch to send back the actu
 More details here:
 https://github.com/tmijs/tmi.js/issues/529
 
+## Connection handling
+The client never runs more than one socket. Upstream can leave a previous socket alive, which parses every message twice and causes endless disconnections when Twitch closes it.
+
+- `connect()` can be called at any time. It does nothing if already connected, waits for the current attempt if there's one, and cancels any scheduled reconnection.
+- `disconnect()` cancels any scheduled reconnection, and doesn't trigger one if called while connecting.
+- `forceReconnect()` is new. It drops the current connection if any and connects again right away, without waiting for the previous socket to close. It enables automatic reconnections back if an authentication failure disabled them, so it can be used to apply a new token.
+- `join()` can be called while a connection is on its way. The channel gets joined once connected instead of failing with `Not connected to server.`. It still fails if no connection is coming.
+- `ping()` can be called at any time, only one ping timer runs at once.
+- `socketclose` is a new event giving the close event of a socket (`code`, `reason`, `wasClean`), including sockets that got replaced.
+- `disconnected` is emitted once per lost socket, even if the connection fails with an error.
+- Calling `emit()` no longer skips a listener when the previous one removes itself, so all the pending `once()` listeners get called.
+
 # tmi.js
 
 ![Test Workflow Status](https://github.com/tmijs/tmi.js/workflows/Test/badge.svg)
